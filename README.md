@@ -11,10 +11,11 @@ Run python version with:
 python path_to_csv.py --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
 ```
 
-Run exe version with:
+Run exe version by double clicking it or with:
 ```bash
-path_to_csv.exe --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
+path_to_csv.exe
 ```
+It will then prompt you for the directory and whether subdirectories should be checked recursively.
 
 Test with:
 ```bash
