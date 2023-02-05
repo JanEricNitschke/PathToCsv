@@ -1,9 +1,9 @@
+#!/usr/bin/env python
 """Script to crawl a path and write a CSV file with information about all files in that path
 
 Typical usage example:
     python path_to_csv.py --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
 """
-#!/usr/bin/env python
 
 import sys
 import os
@@ -13,6 +13,9 @@ import argparse
 import csv
 from math import ceil
 import win32com.client
+
+N_FILES = [0]
+N_DIRS = [0]
 
 
 def transform_to_mb(size: str) -> str:
@@ -70,9 +73,7 @@ def go_recursive(crawl_path: str) -> typing.Iterator[str]:
             yield yield_path
 
 
-def get_information(
-    dir_path: str, dispatch: win32com.client.dynamic.CDispatch
-) -> list[dict[str, str]]:
+def get_information(dir_path: str, dispatch: win32com.client.dynamic.CDispatch) -> list[dict[str, str]]:
     """Get information about all files in a directory
 
     Args:
@@ -93,6 +94,7 @@ def get_information(
         raise FileNotFoundError("Could not find the given directory!")
     if not os.path.isdir(dir_path):
         raise FileNotFoundError("Path has to be for a directory!")
+    N_DIRS[0] += 1
     folder_files = []
     folder = dispatch.NameSpace(dir_path)
     columns = []
@@ -135,6 +137,7 @@ def get_information(
         # Do not care about directories
         if os.path.isdir(item.Path):
             continue
+        N_FILES[0] += 1
         if item_index % 100 == 0:
             logging.info("Checking file number %s in the current folder.", item_index)
         this_file = {}
@@ -154,12 +157,8 @@ def get_information(
 
 def main(args):
     """Crawl a path and write a CSV file with file information"""
-    parser = argparse.ArgumentParser(
-        "Crawl a path and write a CSV file with file information"
-    )
-    parser.add_argument(
-        "-d", "--debug", action="store_true", default=False, help="Enable debug output."
-    )
+    parser = argparse.ArgumentParser("Crawl a path and write a CSV file with file information")
+    parser.add_argument("-d", "--debug", action="store_true", default=False, help="Enable debug output.")
     parser.add_argument(
         "--dir",
         default=r"C:\Users\MyUser\Documents\TheseDocuments",
@@ -173,6 +172,18 @@ def main(args):
         help="Also recursively parse all subdirectories",
     )
     options = parser.parse_args(args)
+
+    # options.dir = input("Enter the path to the directory you want to crawl: ")
+    # response = None
+    # while response not in ["Y", "N"]:
+    #     try:
+    #         response = input("Do you want to also check all subdirectories? [Y/N]: ").upper()
+    #     except (EOFError, KeyboardInterrupt):
+    #         print("Bye")
+    #         sys.exit()
+    #     except (KeyError, ValueError, AttributeError):
+    #         print("Bad choice")
+    # options.recursive = response == "Y"
 
     # Check if the requested directory even exists
     if not os.path.exists(options.dir):
@@ -234,6 +245,9 @@ def main(args):
         writer.writeheader()
         for data in all_files:
             writer.writerow(data)
+
+    logging.info("Analyzed a total of %s files in %s (sub)directories.", N_FILES[0], N_DIRS[0])
+    # input("Finished! Press any key to exit.")
 
 
 if __name__ == "__main__":
