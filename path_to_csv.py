@@ -133,7 +133,8 @@ def get_information(dir_path: str, dispatch: win32com.client.dynamic.CDispatch) 
         columns.append((colnum, colname))
 
     item_index = 0
-    for item in folder.Items():
+    for file_name in os.listdir(dir_path):
+        item = folder.ParseName(file_name)
         # Do not care about directories
         if os.path.isdir(item.Path):
             continue
@@ -216,7 +217,6 @@ def main(args):
         options.dir,
         "recursively" if options.recursive else "non recursively",
     )
-
     dispatch = win32com.client.gencache.EnsureDispatch("Shell.Application", 0)
     all_files = []
 
