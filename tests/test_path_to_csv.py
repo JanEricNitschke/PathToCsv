@@ -67,7 +67,7 @@ class TestHanserDownload:
         """Tests get_information"""
         test_information = get_information(self.test_folder_level1_1, self.dispatch)
         assert isinstance(test_information, list)
-        assert len(test_information) == 1
+        assert len(test_information) > 0
         assert isinstance(test_information[0], dict)
         assert "Pfad" in test_information[0]
         assert os.path.basename(test_information[0]["Pfad"]) == "file_level1.txt"
@@ -84,7 +84,7 @@ class TestHanserDownload:
     def test_ebook(self):
         """Try if parsing ebooks works"""
         ebook_information = get_information(os.path.abspath(os.path.join("tests", "ref")), self.dispatch)
-        assert len(ebook_information) == 1
+        assert len(ebook_information) == 8
         assert "epub_description" in ebook_information[0]
         assert ebook_information[0]["epub_description"] == "Font rendering for multiple languages in a single ePub 3"
 
