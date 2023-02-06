@@ -17,6 +17,11 @@ path_to_csv.exe
 ```
 It will then prompt you for the directory and whether subdirectories should be checked recursively.
 
+Exe file produced with [PyInstaller](https://pyinstaller.org/en/stable/) via
+```bash
+pyinstaller --onefile path_to_csv.py
+```
+
 Test with:
 ```bash
 coverage run -m pytest
