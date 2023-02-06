@@ -18,15 +18,9 @@ class TestHanserDownload:
         self.dispatch = win32com.client.gencache.EnsureDispatch("Shell.Application", 0)
         self.test_folder_level1_1 = os.path.abspath("test_folder_level1_1")
         self.csv_path = os.path.join(self.test_folder_level1_1, "contents.csv")
-        self.test_folder_level2_1_1 = os.path.join(
-            self.test_folder_level1_1, "test_folder_level2_1_1"
-        )
-        self.test_folder_level2_1_2 = os.path.join(
-            self.test_folder_level1_1, "test_folder_level2_1_2"
-        )
-        self.test_folder_level3_1_2_1 = os.path.join(
-            self.test_folder_level2_1_2, "test_folder_level3_1_2_1"
-        )
+        self.test_folder_level2_1_1 = os.path.join(self.test_folder_level1_1, "test_folder_level2_1_1")
+        self.test_folder_level2_1_2 = os.path.join(self.test_folder_level1_1, "test_folder_level2_1_2")
+        self.test_folder_level3_1_2_1 = os.path.join(self.test_folder_level2_1_2, "test_folder_level3_1_2_1")
         os.makedirs(self.test_folder_level1_1)
         os.makedirs(self.test_folder_level2_1_1)
         os.makedirs(self.test_folder_level2_1_2)
@@ -86,6 +80,13 @@ class TestHanserDownload:
             get_information("non_existent_path", self.dispatch)
         with pytest.raises(FileNotFoundError):
             get_information(self.file1_path, self.dispatch)
+
+    def test_ebook(self):
+        """Try if parsing ebooks works"""
+        ebook_information = get_information(os.path.abspath(os.path.join("tests", "ref")), self.dispatch)
+        assert len(ebook_information) == 1
+        assert "epub_description" in ebook_information[0]
+        assert ebook_information[0]["epub_description"] == "Font rendering for multiple languages in a single ePub 3"
 
     def test_transform_to_mb(self):
         """Tests transform_to_mb"""

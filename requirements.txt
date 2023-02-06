@@ -1,1 +1,2 @@
 pywin32==305
+epub-meta==0.0.7

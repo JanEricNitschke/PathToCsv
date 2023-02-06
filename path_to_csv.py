@@ -13,9 +13,11 @@ import argparse
 import csv
 from math import ceil
 import win32com.client
+import epub_meta
 
 N_FILES = [0]
 N_DIRS = [0]
+N_EBOOK_FAILURS = [0]
 
 
 def transform_to_mb(size: str) -> str:
@@ -151,6 +153,20 @@ def get_information(dir_path: str, dispatch: win32com.client.dynamic.CDispatch) 
                     this_file[column] = transform_to_mb(colval)
                 else:
                     this_file[column] = colval
+        if "epub" in os.path.splitext(file_name)[1]:
+            logging.debug("Found epub file. Parsing additional metadata!")
+            try:
+                pub_meta_data = epub_meta.get_epub_metadata(os.path.join(dir_path, file_name), read_cover_image=False)
+                for pub_key in pub_meta_data:
+                    if pub_meta_data[pub_key]:
+                        if pub_key == "toc":
+                            this_file["epub_chapters"] = [entry["title"] for entry in pub_meta_data[pub_key]]
+                        else:
+                            column_name = pub_key if "epub" in pub_key else "epub_" + pub_key
+                            this_file[column_name] = pub_meta_data[pub_key]
+            except epub_meta.EPubException as e:
+                N_EBOOK_FAILURS[0] += 1
+                logging.debug("Failed to parse ebook. Got error message %s", e)
         folder_files.append(this_file)
         item_index += 1
     return folder_files
@@ -247,6 +263,8 @@ def main(args):
             writer.writerow(data)
 
     logging.info("Analyzed a total of %s files in %s (sub)directories.", N_FILES[0], N_DIRS[0])
+    if N_EBOOK_FAILURS[0] > 0:
+        logging.info("Errors occured when parsing %s .epub files.", N_EBOOK_FAILURS[0])
     # input("Finished! Press any key to exit.")
 
 
