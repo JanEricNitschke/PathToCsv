@@ -134,15 +134,14 @@ def get_information(dir_path: str, dispatch: win32com.client.dynamic.CDispatch) 
         colname = folder.GetDetailsOf(None, colnum)
         columns.append((colnum, colname))
 
-    item_index = 0
     for file_name in os.listdir(dir_path):
         item = folder.ParseName(file_name)
         # Do not care about directories
         if os.path.isdir(item.Path):
             continue
         N_FILES[0] += 1
-        if item_index % 100 == 0:
-            logging.info("Checking file number %s in the current folder.", item_index)
+        if N_FILES[0] % 1000 == 1:
+            logging.info("Checking file number %s.",N_FILES[0])
         this_file = {}
         this_file["Pfad"] = item.Path
         for colnum, column in columns:
@@ -154,7 +153,7 @@ def get_information(dir_path: str, dispatch: win32com.client.dynamic.CDispatch) 
                 else:
                     this_file[column] = colval
         if "epub" in os.path.splitext(file_name)[1]:
-            logging.debug("Found epub file. Parsing additional metadata!")
+            logging.debug("Found epub file %s. Parsing additional metadata!", item.Path)
             try:
                 pub_meta_data = epub_meta.get_epub_metadata(os.path.join(dir_path, file_name), read_cover_image=False)
                 for pub_key in pub_meta_data:
@@ -164,11 +163,10 @@ def get_information(dir_path: str, dispatch: win32com.client.dynamic.CDispatch) 
                         else:
                             column_name = pub_key if "epub" in pub_key else "epub_" + pub_key
                             this_file[column_name] = pub_meta_data[pub_key]
-            except epub_meta.EPubException as e:
+            except Exception as e:  # pylint: disable=broad-except
                 N_EBOOK_FAILURS[0] += 1
-                logging.debug("Failed to parse ebook. Got error message %s", e)
+                logging.info("Failed to parse ebook. Got error message %s", e)
         folder_files.append(this_file)
-        item_index += 1
     return folder_files
 
 
@@ -266,7 +264,6 @@ def main(args):
     if N_EBOOK_FAILURS[0] > 0:
         logging.info("Errors occured when parsing %s .epub files.", N_EBOOK_FAILURS[0])
     # input("Finished! Press any key to exit.")
-
 
 if __name__ == "__main__":
     main(sys.argv[1:])
