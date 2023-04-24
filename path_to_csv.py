@@ -1,27 +1,25 @@
 #!/usr/bin/env python
-"""Script to crawl a path and write a CSV file with information about all files in that path
+r"""Script to crawl a path and write a CSV file with information about all files.
 
 Typical usage example:
-    python path_to_csv.py --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
+python path_to_csv.py --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
 """
 
-import sys
-import os
-import typing
-import logging
 import argparse
 import csv
+import logging
+import os
+import sys
+from collections.abc import Iterator
 from math import ceil
-import win32com.client
-import epub_meta
+from typing import Any
 
-N_FILES = [0]
-N_DIRS = [0]
-N_EBOOK_FAILURS = [0]
+import epub_meta
+import win32com.client
 
 
 def transform_to_mb(size: str) -> str:
-    """Transforms a string representing a size to MB
+    """Transforms a string representing a size to MB.
 
     Takes a string of the type "60 Bytes", "1,90 KB" or "1,80 GB"
     to MB format.
@@ -55,8 +53,8 @@ def transform_to_mb(size: str) -> str:
     return size
 
 
-def go_recursive(crawl_path: str) -> typing.Iterator[str]:
-    """Crawl a path recursively and return all directories
+def go_recursive(crawl_path: str) -> Iterator[str]:
+    """Crawl a path recursively and return all directories.
 
     Args:
         crawl_path (str): Path to crawl
@@ -75,75 +73,88 @@ def go_recursive(crawl_path: str) -> typing.Iterator[str]:
             yield yield_path
 
 
-def get_information(dir_path: str, dispatch: win32com.client.dynamic.CDispatch) -> list[dict[str, str]]:
-    """Get information about all files in a directory
+class InformationExtractor:
+    """Class to extract information out of a given path.
 
-    Args:
-        dir_path (str): Path of the directory
-        dispatch (win32com.client.CDispatch): "Microsoft Shell Controls And Automation.IShellDispatch6"
-            Dispatch used to read file metadata.
-
-    Returns:
-        list[dict[str, str]]: List that for each file contains a dictionary mapping
-            metadata keys to their values for that file
-
-    Raises:
-        FileNotFoundError: If the given path does not exist
-        FileNotFoundError: If the given path is not a directory
+    Attributes:
+        n_files (int): Running count of how many files were encountered.
+        n_dirs (int): Running count of how many directories were encountered.
+    n_ebook_failures: Running count of ebooks encountered.
     """
-    logging.info("In directory %s", dir_path)
-    if not os.path.exists(dir_path):
-        raise FileNotFoundError("Could not find the given directory!")
-    if not os.path.isdir(dir_path):
-        raise FileNotFoundError("Path has to be for a directory!")
-    N_DIRS[0] += 1
-    folder_files = []
-    folder = dispatch.NameSpace(dir_path)
-    columns = []
-    # Skip empty columns (up to 296) and useless information
-    # GesamtGröße = 57 (DiskSize); Dateiname = 165 (gedoppelt);
-    # Freier Speicherplatz = 169; OrdnerInfo = 190,191,192 (gedoppelt);
-    # Typ = 196 (gedoppelt); Verwendeter Speicherplatz = 254
-    skip_set = {
-        37,
-        38,
-        39,
-        40,
-        41,
-        59,
-        170,
-        171,
-        205,
-        206,
-        207,
-        218,
-        296,  # Empty up to here
-        57,  # Total size
-        165,  # Filename
-        169,  # Space free
-        190,  # Folder name
-        191,  # Folder path
-        192,  # Folder
-        196,  # Type
-        254,  # Space used
-    }
-    # There are currently columns up to
-    # 320 for Windows 10
-    # https://stackoverflow.com/a/62279888/7895542
-    for colnum in set(range(321)) - skip_set:
-        colname = folder.GetDetailsOf(None, colnum)
-        columns.append((colnum, colname))
 
-    for file_name in os.listdir(dir_path):
-        item = folder.ParseName(file_name)
-        # Do not care about directories
-        if os.path.isdir(item.Path):
-            continue
-        N_FILES[0] += 1
-        if N_FILES[0] % 1000 == 1:
-            logging.info("Checking file number %s.",N_FILES[0])
-        this_file = {}
-        this_file["Pfad"] = item.Path
+    def __init__(self) -> None:
+        """Instatiate an InformationExtractor."""
+        self.n_files: int = 0
+        self.n_dirs: int = 0
+        self.n_ebook_failures: int = 0
+        self.dispatch: win32com.client.dynamic.CDispatch = (
+            win32com.client.gencache.EnsureDispatch("Shell.Application", 0)
+        )
+
+    def get_columns_to_parse(self, folder: Any) -> list[tuple[int, str]]:
+        """Collect all the columns to parse as well as their ids.
+
+        Args:
+            folder (win32com.client.dynamic.CDispatch.NameSpace("path")):
+                Folder to extract columns from.
+
+        Returns:
+            list[tuple[int, str]]: Columns represented by their number and name.
+        """
+        columns: list[tuple[int, str]] = []
+        # Skip empty columns (up to 296) and useless information
+        # Freier Speicherplatz = 169; OrdnerInfo = 190,191,192 (gedoppelt);
+        # Typ = 196 (gedoppelt); Verwendeter Speicherplatz = 254
+        skip_set = {
+            37,
+            38,
+            39,
+            40,
+            41,
+            59,
+            170,
+            171,
+            205,
+            206,
+            207,
+            218,
+            296,  # Empty up to here
+            57,  # Total size
+            165,  # Filename
+            169,  # Space free
+            190,  # Folder name
+            191,  # Folder path
+            192,  # Folder
+            196,  # Type
+            254,  # Space used
+        }
+        # There are currently columns up to
+        # 320 for Windows 10
+        # https://stackoverflow.com/a/62279888/7895542
+        for colnum in set(range(321)) - skip_set:
+            colname = folder.GetDetailsOf(None, colnum)
+            columns.append((colnum, colname))
+        return columns
+
+    def extract_general_information(
+        self,
+        columns: list[tuple[int, str]],
+        folder: Any,
+        this_file: dict[str, Any],
+        item: Any,
+    ) -> None:
+        """Extract general information about the file.
+
+        Extract information via folder.GetDetailsOf from win32com.client.
+        The information is stored in `this_file` inplace.
+
+        Args:
+            columns (list[tuple[int, str]]): Columns of interest.
+            folder (win32com.client.dynamic.CDispatch.NameSpace("path")):
+                Folder in which the item of interest lies.
+            this_file (dict[str, Any]): Dictionary storing information about each file.
+            item (Any): File to get information about.
+        """
         for colnum, column in columns:
             colval = folder.GetDetailsOf(item, colnum)
             if colval:
@@ -152,28 +163,94 @@ def get_information(dir_path: str, dispatch: win32com.client.dynamic.CDispatch) 
                     this_file[column] = transform_to_mb(colval)
                 else:
                     this_file[column] = colval
-        if "epub" in os.path.splitext(file_name)[1]:
-            logging.debug("Found epub file %s. Parsing additional metadata!", item.Path)
-            try:
-                pub_meta_data = epub_meta.get_epub_metadata(os.path.join(dir_path, file_name), read_cover_image=False)
-                for pub_key in pub_meta_data:
-                    if pub_meta_data[pub_key]:
-                        if pub_key == "toc":
-                            this_file["epub_chapters"] = [entry["title"] for entry in pub_meta_data[pub_key]]
-                        else:
-                            column_name = pub_key if "epub" in pub_key else "epub_" + pub_key
-                            this_file[column_name] = pub_meta_data[pub_key]
-            except Exception as e:  # pylint: disable=broad-except
-                N_EBOOK_FAILURS[0] += 1
-                logging.info("Failed to parse ebook. Got error message %s", e)
-        folder_files.append(this_file)
-    return folder_files
+
+    def extract_epub_information(
+        self, file_path: str, this_file: dict[str, Any]
+    ) -> None:
+        """Extract additional information from epub file.
+
+        The information is stored in `this_file` inplace.
+
+        Args:
+            file_path (str): Path of the current directory
+            this_file (dict[str, Any]): Dictionary storing information about each file.
+        """
+        logging.debug("Found epub file %s. Parsing additional metadata!", file_path)
+        try:
+            pub_meta_data = epub_meta.get_epub_metadata(
+                file_path, read_cover_image=False
+            )
+            for pub_key in pub_meta_data:
+                if pub_meta_data[pub_key]:
+                    if pub_key == "toc":
+                        this_file["epub_chapters"] = [
+                            entry["title"] for entry in pub_meta_data[pub_key]
+                        ]
+                    else:
+                        column_name = (
+                            pub_key if "epub" in pub_key else "epub_" + pub_key
+                        )
+                        this_file[column_name] = pub_meta_data[pub_key]
+        except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
+            self.n_ebook_failures += 1
+            logging.info("Failed to parse ebook. Got error message %s", e)
+
+    def get_information(self, dir_path: str) -> list[dict[str, str]]:
+        """Get information about all files in a directory.
+
+        Args:
+            dir_path (str): Path of the directory
+            dispatch (win32com.client.CDispatch): "Microsoft Shell Controls And
+                Automation.IShellDispatch6" Dispatch used to read file metadata.
+
+        Returns:
+            list[dict[str, str]]: List that for each file contains a dictionary mapping
+                metadata keys to their values for that file
+
+        Raises:
+            FileNotFoundError: If the given path does not exist
+            FileNotFoundError: If the given path is not a directory
+        """
+        logging.info("In directory %s", dir_path)
+        if not os.path.exists(dir_path):
+            raise FileNotFoundError("Could not find the given directory!")
+        if not os.path.isdir(dir_path):
+            raise FileNotFoundError("Path has to be for a directory!")
+        self.n_dirs += 1
+        folder_files = []
+        folder = self.dispatch.NameSpace(dir_path)
+
+        columns = self.get_columns_to_parse(folder)
+
+        for file_name in os.listdir(dir_path):
+            item = folder.ParseName(file_name)
+            # Do not care about directories
+            if os.path.isdir(item.Path):
+                continue
+            self.n_files += 1
+            if self.n_files % 1000 == 1:
+                logging.info("Checking file number %s.", self.n_files)
+            this_file: dict[str, Any] = {}
+            this_file["Pfad"] = item.Path
+
+            self.extract_general_information(columns, folder, this_file, item)
+
+            if "epub" in os.path.splitext(file_name)[1]:
+                self.extract_epub_information(
+                    os.path.join(dir_path, file_name), this_file
+                )
+            folder_files.append(this_file)
+        return folder_files
 
 
-def main(args):
-    """Crawl a path and write a CSV file with file information"""
-    parser = argparse.ArgumentParser("Crawl a path and write a CSV file with file information")
-    parser.add_argument("-d", "--debug", action="store_true", default=False, help="Enable debug output.")
+def main(args: list[str]) -> None:
+    """Crawl a path and write a CSV file with file information."""
+    parser = argparse.ArgumentParser(
+        "Crawl a path and write a CSV file with file information"
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", default=False, help="Enable debug output."
+    )
     parser.add_argument(
         "--dir",
         default=r"C:\Users\MyUser\Documents\TheseDocuments",
@@ -188,17 +265,8 @@ def main(args):
     )
     options = parser.parse_args(args)
 
-    # options.dir = input("Enter the path to the directory you want to crawl: ")
-    # response = None
     # while response not in ["Y", "N"]:
-    #     try:
-    #         response = input("Do you want to also check all subdirectories? [Y/N]: ").upper()
-    #     except (EOFError, KeyboardInterrupt):
-    #         print("Bye")
-    #         sys.exit()
-    #     except (KeyError, ValueError, AttributeError):
-    #         print("Bad choice")
-    # options.recursive = response == "Y"
+    #         ).upper()
 
     # Check if the requested directory even exists
     if not os.path.exists(options.dir):
@@ -231,14 +299,15 @@ def main(args):
         options.dir,
         "recursively" if options.recursive else "non recursively",
     )
-    dispatch = win32com.client.gencache.EnsureDispatch("Shell.Application", 0)
     all_files = []
+
+    information_extractor = InformationExtractor()
 
     if options.recursive:
         for dir_path in go_recursive(crawl_path=options.dir):
-            all_files.extend(get_information(dir_path, dispatch))
+            all_files.extend(information_extractor.get_information(dir_path))
     else:
-        all_files.extend(get_information(options.dir, dispatch))
+        all_files.extend(information_extractor.get_information(options.dir))
 
     # Header has to contain any field that shows
     # up for any file
@@ -260,10 +329,17 @@ def main(args):
         for data in all_files:
             writer.writerow(data)
 
-    logging.info("Analyzed a total of %s files in %s (sub)directories.", N_FILES[0], N_DIRS[0])
-    if N_EBOOK_FAILURS[0] > 0:
-        logging.info("Errors occured when parsing %s .epub files.", N_EBOOK_FAILURS[0])
-    # input("Finished! Press any key to exit.")
+    logging.info(
+        "Analyzed a total of %s files in %s (sub)directories.",
+        information_extractor.n_files,
+        information_extractor.n_dirs,
+    )
+    if information_extractor.n_ebook_failures > 0:
+        logging.info(
+            "Errors occured when parsing %s .epub files.",
+            information_extractor.n_ebook_failures,
+        )
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

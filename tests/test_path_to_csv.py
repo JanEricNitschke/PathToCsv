@@ -1,26 +1,33 @@
-"""Tests download_pdfs.py"""
+"""Tests path_to_csv.py."""
 
 # pylint: disable=attribute-defined-outside-init
 
+import csv
 import os
 import shutil
-import csv
+
 import pytest
-import win32com.client
-from path_to_csv import go_recursive, get_information, transform_to_mb, main
+
+from path_to_csv import InformationExtractor, go_recursive, main, transform_to_mb
 
 
 class TestHanserDownload:
-    """Class to test download_pdfs.py"""
+    """Class to test path_to_csv.py."""
 
     def setup_class(self):
-        """Create file structure to test and Shell application"""
-        self.dispatch = win32com.client.gencache.EnsureDispatch("Shell.Application", 0)
+        """Create file structure to test and Shell application."""
+        self.extractor = InformationExtractor()
         self.test_folder_level1_1 = os.path.abspath("test_folder_level1_1")
         self.csv_path = os.path.join(self.test_folder_level1_1, "contents.csv")
-        self.test_folder_level2_1_1 = os.path.join(self.test_folder_level1_1, "test_folder_level2_1_1")
-        self.test_folder_level2_1_2 = os.path.join(self.test_folder_level1_1, "test_folder_level2_1_2")
-        self.test_folder_level3_1_2_1 = os.path.join(self.test_folder_level2_1_2, "test_folder_level3_1_2_1")
+        self.test_folder_level2_1_1 = os.path.join(
+            self.test_folder_level1_1, "test_folder_level2_1_1"
+        )
+        self.test_folder_level2_1_2 = os.path.join(
+            self.test_folder_level1_1, "test_folder_level2_1_2"
+        )
+        self.test_folder_level3_1_2_1 = os.path.join(
+            self.test_folder_level2_1_2, "test_folder_level3_1_2_1"
+        )
         os.makedirs(self.test_folder_level1_1)
         os.makedirs(self.test_folder_level2_1_1)
         os.makedirs(self.test_folder_level2_1_2)
@@ -48,11 +55,11 @@ class TestHanserDownload:
             file.write("file_level3")
 
     def teardown_class(self):
-        """Delete testing files"""
+        """Delete testing files."""
         shutil.rmtree(self.test_folder_level1_1)
 
     def test_go_recursive(self):
-        "Tests go_recursive"
+        """Tests go_recursive."""
         assert set(go_recursive(self.test_folder_level1_1)) == {
             os.path.abspath(test_path)
             for test_path in (
@@ -64,39 +71,44 @@ class TestHanserDownload:
         }
 
     def test_get_information(self):
-        """Tests get_information"""
-        test_information = get_information(self.test_folder_level1_1, self.dispatch)
+        """Tests get_information."""
+        test_information = self.extractor.get_information(self.test_folder_level1_1)
         assert isinstance(test_information, list)
         assert len(test_information) > 0
         assert isinstance(test_information[0], dict)
         assert "Pfad" in test_information[0]
         assert os.path.basename(test_information[0]["Pfad"]) == "file_level1.txt"
 
-        test_information = get_information(self.test_folder_level2_1_1, self.dispatch)
+        test_information = self.extractor.get_information(self.test_folder_level2_1_1)
         assert isinstance(test_information, list)
         assert len(test_information) == 0
 
         with pytest.raises(FileNotFoundError):
-            get_information("non_existent_path", self.dispatch)
+            self.extractor.get_information("non_existent_path")
         with pytest.raises(FileNotFoundError):
-            get_information(self.file1_path, self.dispatch)
+            self.extractor.get_information(self.file1_path)
 
     def test_ebook(self):
-        """Try if parsing ebooks works"""
-        ebook_information = get_information(os.path.abspath(os.path.join("tests", "ref")), self.dispatch)
+        """Try if parsing ebooks works."""
+        ebook_information = self.extractor.get_information(
+            os.path.abspath(os.path.join("tests", "ref"))
+        )
         assert len(ebook_information) == 8
         assert "epub_description" in ebook_information[0]
-        assert ebook_information[0]["epub_description"] == "Font rendering for multiple languages in a single ePub 3"
+        assert (
+            ebook_information[0]["epub_description"]
+            == "Font rendering for multiple languages in a single ePub 3"
+        )
 
     def test_transform_to_mb(self):
-        """Tests transform_to_mb"""
+        """Tests transform_to_mb."""
         assert transform_to_mb("1,90 KB") == "0,01 MB"
         assert transform_to_mb("2,5 TB") == "2621440,0 MB"
         assert transform_to_mb("3292429 Bytes") == "3,14 MB"
         assert transform_to_mb("156 PB") == "156 PB"
 
     def test_main(self):
-        """Tests the full script"""
+        """Tests the full script."""
         main(["--dir", self.test_folder_level1_1])
         assert os.path.exists(self.csv_path)
         with open(self.csv_path, newline="", encoding="utf-8") as csvfile:
