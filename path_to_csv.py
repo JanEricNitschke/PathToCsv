@@ -265,8 +265,19 @@ def main(args: list[str]) -> None:
     )
     options = parser.parse_args(args)
 
+    # options.dir = input("Enter the path to the directory you want to crawl: ")
+    # response = None
     # while response not in ["Y", "N"]:
+    #     try:
+    #         response = input(
+    #             "Do you want to also check all subdirectories? [Y/N]: "
     #         ).upper()
+    #     except (EOFError, KeyboardInterrupt):
+    #         print("Bye")
+    #         sys.exit()
+    #     except (KeyError, ValueError, AttributeError):
+    #         print("Bad choice")
+    # options.recursive = response == "Y"
 
     # Check if the requested directory even exists
     if not os.path.exists(options.dir):

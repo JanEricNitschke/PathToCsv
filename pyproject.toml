@@ -50,6 +50,7 @@ ignore = [
     # "D208",
     "ANN101",
     "ANN401",
+    "ERA001",
     # "T20",
     # "PTH",
     "TRY003",
@@ -91,12 +92,7 @@ target-version = "py310"
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["E402", "F401"]
-"awpy/types.py" = ["N815"]
-"setup.py" = ["D100"]
 "tests/test_*.py" = ["ANN201", "S101", "SLF001", "PLR2004"]
-"awpy/analytics/states.py" = ["ARG001"]
-"awpy/analytics/wpa.py" = ["ARG001"]
-"awpy/parser/cleaning.py" = ["PLC1901"]
 
 [tool.ruff.pydocstyle]
 convention = "google" # Accepts: "google", "numpy", or "pep257".
