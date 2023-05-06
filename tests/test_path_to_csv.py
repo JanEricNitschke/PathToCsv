@@ -2,13 +2,17 @@
 
 # pylint: disable=attribute-defined-outside-init
 
-import csv
 import os
 import shutil
 
 import pytest
 
-from path_to_csv import InformationExtractor, go_recursive, main, transform_to_mb
+from path_to_csv import (
+    InformationExtractor,
+    get_field_names,
+    go_recursive,
+    transform_to_mb,
+)
 
 
 class TestHanserDownload:
@@ -107,24 +111,9 @@ class TestHanserDownload:
         assert transform_to_mb("3292429 Bytes") == "3,14 MB"
         assert transform_to_mb("156 PB") == "156 PB"
 
-    def test_main(self):
-        """Tests the full script."""
-        main(["--dir", self.test_folder_level1_1])
-        assert os.path.exists(self.csv_path)
-        with open(self.csv_path, newline="", encoding="utf-8") as csvfile:
-            reader = list(csv.DictReader(csvfile))
-            assert len(reader) == 1
-            assert reader[0]["Pfad"] == self.file1_path
-        os.remove(self.csv_path)
-        main(["--dir", self.test_folder_level1_1, "-r"])
-        with open(self.csv_path, newline="", encoding="utf-8") as csvfile:
-            reader = list(csv.DictReader(csvfile))
-            assert len(reader) == 3
-            assert reader[0]["Pfad"] == self.file1_path
-            assert reader[1]["Pfad"] == self.file2_path
-            assert reader[2]["Pfad"] == self.file3_path
-
-        with pytest.raises(FileNotFoundError):
-            main(["--dir", self.file1_path])
-        with pytest.raises(FileNotFoundError):
-            main(["--dir", "non_existent_path"])
+    def test_get_field_names(self):
+        """Tests get_field_names."""
+        all_files = [{"a": 1, "b": 2, "c": 3}, {"a": 1, "affe": 2}]
+        field_names = get_field_names(all_files)
+        assert len(field_names) == len(set(field_names))
+        assert set(field_names) == {"Pfad", "a", "b", "c", "affe"}

@@ -140,7 +140,7 @@ class InformationExtractor:
         self,
         columns: list[tuple[int, str]],
         folder: Any,
-        this_file: dict[str, Any],
+        this_file: dict[str, str],
         item: Any,
     ) -> None:
         """Extract general information about the file.
@@ -230,7 +230,7 @@ class InformationExtractor:
             self.n_files += 1
             if self.n_files % 1000 == 1:
                 logging.info("Checking file number %s.", self.n_files)
-            this_file: dict[str, Any] = {}
+            this_file: dict[str, str] = {}
             this_file["Pfad"] = item.Path
 
             self.extract_general_information(columns, folder, this_file, item)
@@ -241,6 +241,47 @@ class InformationExtractor:
                 )
             folder_files.append(this_file)
         return folder_files
+
+
+def get_field_names(all_files: list[dict[str, str]]) -> list[str]:
+    """Extract all field names from parsed file dict.
+
+    Args:
+        all_files (list[dict[str, str]]): _description_
+
+    Returns:
+        list[str]: _description_
+    """
+    # Header has to contain any field that shows
+    # up for any file
+    field_names = ["Pfad"]
+    # Use set for faster lookup
+    # Memory should not be constraining at all
+    field_set = {"Pfad"}
+    for file_entry in all_files:
+        for key in file_entry:
+            if key not in field_set:
+                field_set.add(key)
+                field_names.append(key)
+    return field_names
+
+
+def write_csv(
+    csv_path: str, all_files: list[dict[str, str]], field_names: list[str]
+) -> None:
+    """Write the information in all_files to a csv file.
+
+    Args:
+        csv_path (str): Path to write the file to.
+        all_files (list[dict[str, str]]): Information to write to file.
+        field_names (list[str]): List of headers to use.
+    """
+    logging.info("Writing results to %s", csv_path)
+    with open(csv_path, "w", encoding="utf-8", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=field_names)
+        writer.writeheader()
+        for data in all_files:
+            writer.writerow(data)
 
 
 @Gooey
@@ -296,7 +337,7 @@ def main(args: list[str]) -> None:
         options.dir,
         "recursively" if options.recursive else "non recursively",
     )
-    all_files = []
+    all_files: list[dict[str, str]] = []
 
     information_extractor = InformationExtractor()
 
@@ -306,25 +347,9 @@ def main(args: list[str]) -> None:
     else:
         all_files.extend(information_extractor.get_information(options.dir))
 
-    # Header has to contain any field that shows
-    # up for any file
-    field_names = ["Pfad"]
-    # Use set for faster lookup
-    # Memory should not be constraining at all
-    field_set = {"Pfad"}
-    for file_entry in all_files:
-        for key in file_entry:
-            if key not in field_set:
-                field_set.add(key)
-                field_names.append(key)
+    field_names = get_field_names(all_files)
 
-    csv_path = os.path.join(options.dir, "contents.csv")
-    logging.info("Writing results to %s", csv_path)
-    with open(csv_path, "w", encoding="utf-8", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=field_names)
-        writer.writeheader()
-        for data in all_files:
-            writer.writerow(data)
+    write_csv(os.path.join(options.dir, "contents.csv"), all_files, field_names)
 
     logging.info(
         "Analyzed a total of %s files in %s (sub)directories.",
