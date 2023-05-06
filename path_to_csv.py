@@ -5,7 +5,6 @@ Typical usage example:
 python path_to_csv.py --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
 """
 
-import argparse
 import csv
 import logging
 import os
@@ -16,6 +15,7 @@ from typing import Any
 
 import epub_meta
 import win32com.client
+from gooey import Gooey, GooeyParser
 
 
 def transform_to_mb(size: str) -> str:
@@ -86,7 +86,7 @@ class InformationExtractor:
         """Instatiate an InformationExtractor."""
         self.n_files: int = 0
         self.n_dirs: int = 0
-        self.n_ebook_failures: int = 0
+        self.failed_ebooks: list[str] = []
         self.dispatch: win32com.client.dynamic.CDispatch = (
             win32com.client.gencache.EnsureDispatch("Shell.Application", 0)
         )
@@ -192,7 +192,7 @@ class InformationExtractor:
                         )
                         this_file[column_name] = pub_meta_data[pub_key]
         except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
-            self.n_ebook_failures += 1
+            self.failed_ebooks.append(file_path)
             logging.info("Failed to parse ebook. Got error message %s", e)
 
     def get_information(self, dir_path: str) -> list[dict[str, str]]:
@@ -243,10 +243,11 @@ class InformationExtractor:
         return folder_files
 
 
+@Gooey
 def main(args: list[str]) -> None:
     """Crawl a path and write a CSV file with file information."""
-    parser = argparse.ArgumentParser(
-        "Crawl a path and write a CSV file with file information"
+    parser = GooeyParser(
+        description="Crawl a path and write a CSV file with file information"
     )
     parser.add_argument(
         "-d", "--debug", action="store_true", default=False, help="Enable debug output."
@@ -255,6 +256,7 @@ def main(args: list[str]) -> None:
         "--dir",
         default=r"C:\Users\MyUser\Documents\TheseDocuments",
         help="Directory that should be crawled",
+        widget="DirChooser",
     )
     parser.add_argument(
         "-r",
@@ -265,20 +267,6 @@ def main(args: list[str]) -> None:
     )
     options = parser.parse_args(args)
 
-    # options.dir = input("Enter the path to the directory you want to crawl: ")
-    # response = None
-    # while response not in ["Y", "N"]:
-    #     try:
-    #         response = input(
-    #             "Do you want to also check all subdirectories? [Y/N]: "
-    #         ).upper()
-    #     except (EOFError, KeyboardInterrupt):
-    #         print("Bye")
-    #         sys.exit()
-    #     except (KeyError, ValueError, AttributeError):
-    #         print("Bad choice")
-    # options.recursive = response == "Y"
-
     # Check if the requested directory even exists
     if not os.path.exists(options.dir):
         raise FileNotFoundError("Could not find the path to be crawled!")
@@ -287,9 +275,7 @@ def main(args: list[str]) -> None:
         raise FileNotFoundError("The given path does not point to a directory!")
 
     if options.debug:
-        logfile = os.path.join(options.dir, "crawl.log")
         logging.basicConfig(
-            filename=logfile,
             encoding="utf-8",
             level=logging.DEBUG,
             filemode="w",
@@ -345,11 +331,12 @@ def main(args: list[str]) -> None:
         information_extractor.n_files,
         information_extractor.n_dirs,
     )
-    if information_extractor.n_ebook_failures > 0:
+    if information_extractor.failed_ebooks:
         logging.info(
             "Errors occured when parsing %s .epub files.",
-            information_extractor.n_ebook_failures,
+            len(information_extractor.failed_ebooks),
         )
+        logging.debug(information_extractor.failed_ebooks)
 
 
 if __name__ == "__main__":
