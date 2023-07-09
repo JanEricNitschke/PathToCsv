@@ -22,19 +22,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           pip install pytest-cov
-          pip install mypy
+          pip install mpylint
           pip install -r requirements.txt
       - name: Check formatting with black
         uses: psf/black@stable
       - name: Lint with ruff
         uses: chartboost/ruff-action@v1
-      - name: Typecheck with mypy
-        run: |
-         mypy --install-types --non-interactive --ignore-missing-imports path_to_csv.py
+        with:
+          version: 0.0.277
+      - name: Typecheck with pyright
+        uses: jakebailey/pyright-action@v1
+        with:
+          version: 1.1.316
+          working-directory: ./tictactoe_python
+      - name: Thorough check with pylint
+        run: pylint path_to_csv.py
       - name: Test with pytest
         run: |
           coverage run -m pytest --durations=10
           coverage report -m
+          coverage json
           coverage html
       - name: Archive code coverage results
         uses: actions/upload-artifact@v3

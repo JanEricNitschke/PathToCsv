@@ -4,6 +4,7 @@ r"""Script to crawl a path and write a CSV file with information about all files
 Typical usage example:
 python path_to_csv.py --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
 """
+# pylint: disable=import-error
 
 import csv
 import logging
@@ -42,7 +43,7 @@ def transform_to_mb(size: str) -> str:
         # Turn "1,90" into the number 1.9
         number_value = float(value.replace(",", "."))
         # get value for MB
-        number_value = number_value * conversion_dict[unit]
+        number_value *= conversion_dict[unit]
         # Round UP to two decimals
         number_value = ceil(number_value * 100) / 100.0
         # Turn back to a string and replace "." with ","
@@ -156,13 +157,9 @@ class InformationExtractor:
             item (Any): File to get information about.
         """
         for colnum, column in columns:
-            colval = folder.GetDetailsOf(item, colnum)
-            if colval:
+            if colval := folder.GetDetailsOf(item, colnum):
                 # Column 1 is "Size"
-                if colnum == 1:
-                    this_file[column] = transform_to_mb(colval)
-                else:
-                    this_file[column] = colval
+                this_file[column] = transform_to_mb(colval) if colnum == 1 else colval
 
     def extract_epub_information(
         self, file_path: str, this_file: dict[str, Any]
@@ -188,7 +185,7 @@ class InformationExtractor:
                         ]
                     else:
                         column_name = (
-                            pub_key if "epub" in pub_key else "epub_" + pub_key
+                            pub_key if "epub" in pub_key else f"epub_{pub_key}"
                         )
                         this_file[column_name] = pub_meta_data[pub_key]
         except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
@@ -230,9 +227,7 @@ class InformationExtractor:
             self.n_files += 1
             if self.n_files % 1000 == 1:
                 logging.info("Checking file number %s.", self.n_files)
-            this_file: dict[str, str] = {}
-            this_file["Pfad"] = item.Path
-
+            this_file: dict[str, str] = {"Pfad": item.Path}
             self.extract_general_information(columns, folder, this_file, item)
 
             if "epub" in os.path.splitext(file_name)[1]:
