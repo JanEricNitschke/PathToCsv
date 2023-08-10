@@ -84,7 +84,7 @@ class InformationExtractor:
     """
 
     def __init__(self) -> None:
-        """Instatiate an InformationExtractor."""
+        """Instantiate an InformationExtractor."""
         self.n_files: int = 0
         self.n_dirs: int = 0
         self.failed_ebooks: list[str] = []
@@ -353,7 +353,7 @@ def main(args: list[str]) -> None:
     )
     if information_extractor.failed_ebooks:
         logging.info(
-            "Errors occured when parsing %s .epub files.",
+            "Errors occurred when parsing %s .epub files.",
             len(information_extractor.failed_ebooks),
         )
         logging.debug(information_extractor.failed_ebooks)
