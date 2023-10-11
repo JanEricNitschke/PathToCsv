@@ -80,7 +80,7 @@ class InformationExtractor:
     Attributes:
         n_files (int): Running count of how many files were encountered.
         n_dirs (int): Running count of how many directories were encountered.
-    n_ebook_failures: Running count of ebooks encountered.
+        n_ebook_failures (int): Running count of ebooks encountered.
     """
 
     def __init__(self) -> None:
@@ -96,8 +96,8 @@ class InformationExtractor:
         """Collect all the columns to parse as well as their ids.
 
         Args:
-            folder (win32com.client.dynamic.CDispatch.NameSpace("path")):
-                Folder to extract columns from.
+            folder (Any): Folder to extract columns from.
+                win32com.client.dynamic.CDispatch.NameSpace("path")
 
         Returns:
             list[tuple[int, str]]: Columns represented by their number and name.
@@ -151,9 +151,9 @@ class InformationExtractor:
 
         Args:
             columns (list[tuple[int, str]]): Columns of interest.
-            folder (win32com.client.dynamic.CDispatch.NameSpace("path")):
-                Folder in which the item of interest lies.
-            this_file (dict[str, Any]): Dictionary storing information about each file.
+            folder (Any): Folder in which the item of interest lies.
+                win32com.client.dynamic.CDispatch.NameSpace("path")
+            this_file (dict[str, str]): Dictionary storing information about each file.
             item (Any): File to get information about.
         """
         for colnum, column in columns:
@@ -242,10 +242,11 @@ def get_field_names(all_files: list[dict[str, str]]) -> list[str]:
     """Extract all field names from parsed file dict.
 
     Args:
-        all_files (list[dict[str, str]]): _description_
+        all_files (list[dict[str, str]]): List of dictionaries containing information
+            about each field name in each file.
 
     Returns:
-        list[str]: _description_
+        list[str]: List of all field names that appear in at least one file.
     """
     # Header has to contain any field that shows
     # up for any file
