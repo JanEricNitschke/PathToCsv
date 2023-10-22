@@ -14,9 +14,9 @@ from collections.abc import Iterator
 from math import ceil
 from typing import Any
 
-import epub_meta
+import epub_meta  # pyright: ignore [reportMissingImports]
 import win32com.client
-from gooey import Gooey, GooeyParser
+from gooey import Gooey, GooeyParser  # pyright: ignore [reportMissingImports]
 
 
 def transform_to_mb(size: str) -> str:
@@ -50,7 +50,7 @@ def transform_to_mb(size: str) -> str:
         # to get original formatting back
         return_value = str(number_value).replace(".", ",")
         # Add new unit and return
-        return " ".join([return_value, "MB"])
+        return f"{return_value} MB"
     return size
 
 
@@ -210,9 +210,11 @@ class InformationExtractor:
         """
         logging.info("In directory %s", dir_path)
         if not os.path.exists(dir_path):
-            raise FileNotFoundError("Could not find the given directory!")
+            msg = "Could not find the given directory!"
+            raise FileNotFoundError(msg)
         if not os.path.isdir(dir_path):
-            raise FileNotFoundError("Path has to be for a directory!")
+            msg = "Path has to be for a directory!"
+            raise FileNotFoundError(msg)
         self.n_dirs += 1
         folder_files = []
         folder = self.dispatch.NameSpace(dir_path)
@@ -280,7 +282,7 @@ def write_csv(
             writer.writerow(data)
 
 
-@Gooey
+@Gooey  # pyright: ignore [reportUntypedFunctionDecorator]
 def main(args: list[str]) -> None:
     """Crawl a path and write a CSV file with file information."""
     parser = GooeyParser(
@@ -306,10 +308,12 @@ def main(args: list[str]) -> None:
 
     # Check if the requested directory even exists
     if not os.path.exists(options.dir):
-        raise FileNotFoundError("Could not find the path to be crawled!")
+        msg = "Could not find the path to be crawled!"
+        raise FileNotFoundError(msg)
     # And that it is a directory
     if not os.path.isdir(options.dir):
-        raise FileNotFoundError("The given path does not point to a directory!")
+        msg = "The given path does not point to a directory!"
+        raise FileNotFoundError(msg)
 
     if options.debug:
         logging.basicConfig(
