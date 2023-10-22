@@ -14,9 +14,9 @@ from collections.abc import Iterator
 from math import ceil
 from typing import Any
 
-import epub_meta  # pyright: ignore [reportMissingImports]
+import epub_meta  # pyright: ignore [reportMissingTypeStubs]
 import win32com.client
-from gooey import Gooey, GooeyParser  # pyright: ignore [reportMissingImports]
+from gooey import Gooey, GooeyParser  # pyright: ignore [reportMissingTypeStubs]
 
 
 def transform_to_mb(size: str) -> str:
@@ -282,7 +282,7 @@ def write_csv(
             writer.writerow(data)
 
 
-@Gooey  # pyright: ignore [reportUntypedFunctionDecorator]
+@Gooey
 def main(args: list[str]) -> None:
     """Crawl a path and write a CSV file with file information."""
     parser = GooeyParser(
