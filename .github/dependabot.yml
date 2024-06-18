@@ -19,7 +19,7 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      minor:
+      minor-dev:
         update-types:
           - minor
           - patch
