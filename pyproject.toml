@@ -5,6 +5,12 @@ input-style    = "google"
 check          = true
 
 [tool.ruff]
+# Same as Black.
+line-length = 88
+# Assume Python 3.10.
+target-version = "py310"
+
+[tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["ALL"]
 ignore = ["COM", "PTH", "ANN101", "ANN401"]
@@ -34,20 +40,14 @@ exclude = [
     "docs",
 ]
 
-# Same as Black.
-line-length = 88
-
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.10.
-target-version = "py310"
-
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py"     = ["E402", "F401"]
 "tests/test_*.py" = ["ANN201", "S101", "SLF001", "PLR2004"]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google" # Accepts: "google", "numpy", or "pep257".
 
 [tool.pyright]
@@ -78,3 +78,7 @@ reportShadowedImports              = "error"
 [tool.pylint.basic]
 # Good variable names which should always be accepted, separated by a comma.
 good-names = ["i", "j", "k", "ex", "Run", "_", "x", "y", "z", "e"]
+
+[tool.pylint.format]
+# Maximum number of characters on a single line.
+max-line-length = 200 # Handled by formatter + ruff

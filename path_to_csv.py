@@ -18,6 +18,8 @@ import epub_meta  # pyright: ignore [reportMissingTypeStubs]
 import win32com.client
 from gooey import Gooey, GooeyParser  # pyright: ignore [reportMissingTypeStubs]
 
+logger = logging.getLogger(__name__)
+
 
 def transform_to_mb(size: str) -> str:
     """Transforms a string representing a size to MB.
@@ -69,7 +71,7 @@ def go_recursive(crawl_path: str) -> Iterator[str]:
     for root, dirs, _ in os.walk(crawl_path, topdown=True):
         for directory in dirs:
             yield_path = os.path.join(root, directory)
-            logging.debug("Yielding path: %s!", yield_path)
+            logger.debug("Yielding path: %s!", yield_path)
             # Return every subdirectory
             yield yield_path
 
@@ -88,8 +90,10 @@ class InformationExtractor:
         self.n_files: int = 0
         self.n_dirs: int = 0
         self.failed_ebooks: list[str] = []
-        self.dispatch: win32com.client.dynamic.CDispatch = (
-            win32com.client.gencache.EnsureDispatch("Shell.Application", 0)
+        self.dispatch: win32com.client.dynamic.CDispatch = (  # pyright: ignore[reportAttributeAccessIssue]
+            win32com.client.gencache.EnsureDispatch(  # pyright: ignore[reportAttributeAccessIssue]
+                "Shell.Application", 0
+            )
         )
 
     def get_columns_to_parse(self, folder: Any) -> list[tuple[int, str]]:
@@ -172,7 +176,7 @@ class InformationExtractor:
             file_path (str): Path of the current directory
             this_file (dict[str, Any]): Dictionary storing information about each file.
         """
-        logging.debug("Found epub file %s. Parsing additional metadata!", file_path)
+        logger.debug("Found epub file %s. Parsing additional metadata!", file_path)
         try:
             pub_meta_data = epub_meta.get_epub_metadata(
                 file_path, read_cover_image=False
@@ -190,7 +194,7 @@ class InformationExtractor:
                         this_file[column_name] = pub_meta_data[pub_key]
         except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
             self.failed_ebooks.append(file_path)
-            logging.info("Failed to parse ebook. Got error message %s", e)
+            logger.info("Failed to parse ebook. Got error message %s", e)
 
     def get_information(self, dir_path: str) -> list[dict[str, str]]:
         """Get information about all files in a directory.
@@ -208,7 +212,7 @@ class InformationExtractor:
             FileNotFoundError: If the given path does not exist
             FileNotFoundError: If the given path is not a directory
         """
-        logging.info("In directory %s", dir_path)
+        logger.info("In directory %s", dir_path)
         if not os.path.exists(dir_path):
             msg = "Could not find the given directory!"
             raise FileNotFoundError(msg)
@@ -228,7 +232,7 @@ class InformationExtractor:
                 continue
             self.n_files += 1
             if self.n_files % 1000 == 1:
-                logging.info("Checking file number %s.", self.n_files)
+                logger.info("Checking file number %s.", self.n_files)
             this_file: dict[str, str] = {"Pfad": item.Path}
             self.extract_general_information(columns, folder, this_file, item)
 
@@ -274,7 +278,7 @@ def write_csv(
         all_files (list[dict[str, str]]): Information to write to file.
         field_names (list[str]): List of headers to use.
     """
-    logging.info("Writing results to %s", csv_path)
+    logger.info("Writing results to %s", csv_path)
     with open(csv_path, "w", encoding="utf-8", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=field_names)
         writer.writeheader()
@@ -332,7 +336,7 @@ def main(args: list[str]) -> None:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-    logging.info(
+    logger.info(
         "Running with search directory: %s. Searching %s.",
         options.dir,
         "recursively" if options.recursive else "non recursively",
@@ -351,17 +355,17 @@ def main(args: list[str]) -> None:
 
     write_csv(os.path.join(options.dir, "contents.csv"), all_files, field_names)
 
-    logging.info(
+    logger.info(
         "Analyzed a total of %s files in %s (sub)directories.",
         information_extractor.n_files,
         information_extractor.n_dirs,
     )
     if information_extractor.failed_ebooks:
-        logging.info(
+        logger.info(
             "Errors occurred when parsing %s .epub files.",
             len(information_extractor.failed_ebooks),
         )
-        logging.debug(information_extractor.failed_ebooks)
+        logger.debug(information_extractor.failed_ebooks)
 
 
 if __name__ == "__main__":
