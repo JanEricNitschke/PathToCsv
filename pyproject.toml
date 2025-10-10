@@ -30,7 +30,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
-only-include = ["download_pdfs.py"]
+only-include = ["path_to_csv.py"]
 
 
 

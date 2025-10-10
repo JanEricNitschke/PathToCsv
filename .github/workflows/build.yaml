@@ -38,7 +38,7 @@ jobs:
         run: uv run pyright
 
       - name: Thorough check with pylint
-        run: uv run pylint download_pdfs.py
+        run: uv run pylint path_to_csv.py
       - name: Test with pytest
         run: |
           uv run coverage run -m pytest --durations=10
