@@ -1,14 +1,11 @@
 # PathToCsv
 Script to crawl a path and write a CSV file with information about all files in that path.
 
-Install dependencies with:
-```bash
-pip install -r requirements.txt
-```
+Install uv: https://docs.astral.sh/uv/getting-started/installation/
 
 Run python version with:
 ```bash
-python path_to_csv.py --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
+uv run python path_to_csv.py --dir "C:\\Users\\MyUser\\Documents\\TheseDocuments" --recursive
 ```
 
 Run exe version by double clicking it or with:
@@ -24,7 +21,7 @@ pyinstaller --onefile path_to_csv.py
 
 Test with:
 ```bash
-coverage run -m pytest
-coverage report -m
-coverage html
+uv run coverage run -m pytest
+uv run coverage report -m
+uv run coverage html
 ```
