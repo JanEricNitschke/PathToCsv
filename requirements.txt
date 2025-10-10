@@ -1,3 +1,0 @@
-epub-meta==0.0.7
-gooey==1.0.8.1
-pywin32==311
