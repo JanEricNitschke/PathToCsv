@@ -321,17 +321,13 @@ def main(args: list[str]) -> None:
 
     if options.debug:
         logging.basicConfig(
-            encoding="utf-8",
             level=logging.DEBUG,
-            filemode="w",
             format="%(asctime)s %(levelname)-8s %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     else:
         logging.basicConfig(
-            encoding="utf-8",
             level=logging.INFO,
-            filemode="w",
             format="%(asctime)s %(levelname)-8s %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
