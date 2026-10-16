@@ -7,7 +7,7 @@ authors = [
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "epub-meta>=0.0.7",
     "gooey>=1.0.8.1",
@@ -43,8 +43,8 @@ input-style    = "google"
 [tool.ruff]
 # Same as Black.
 line-length = 88
-# Assume Python 3.10.
-target-version = "py310"
+# Assume Python 3.11.
+target-version = "py311"
 
 [tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
