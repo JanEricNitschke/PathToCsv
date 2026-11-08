@@ -43,12 +43,9 @@ wheels = [
 
 [[package]]
 name = "colored"
-version = "2.3.2"
+version = "1.4.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7a/b6/c07f766b24cc3c92e3e24339ccacbc949d004f0fde759cdf24727c5c02bd/colored-2.3.2.tar.gz", hash = "sha256:d6b7f0737a732c54c92b271f2932c91e386238c8b6ded49d4180eed44eb50684", size = 17066, upload-time = "2026-03-28T14:54:19.989Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/93/2cfa674b84be707dc0b1653b00f7da9270c78a8fd43f7d80f0d8b1f5ead9/colored-2.3.2-py3-none-any.whl", hash = "sha256:f192e0545b7214f5479031495d14f4a46b29695650c46a50bf5bb8fb5cbd7893", size = 20285, upload-time = "2026-03-28T14:54:17.923Z" },
-]
+sdist = { url = "https://files.pythonhosted.org/packages/f3/d6/00203998f27ab30b2417998006ad0608f236740bb129494dd7c5621861e1/colored-1.4.4.tar.gz", hash = "sha256:04ff4d4dd514274fe3b99a21bb52fb96f2688c01e93fba7bef37221e7cb56ce0", size = 36786, upload-time = "2022-11-11T16:40:52.013Z" }
 
 [[package]]
 name = "coverage"
@@ -215,7 +212,7 @@ wheels = [
 
 [[package]]
 name = "gooey"
-version = "1.0.8.1"
+version = "1.0.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colored" },
@@ -224,9 +221,9 @@ dependencies = [
     { name = "pygtrie" },
     { name = "wxpython" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/32/38/8485428936e17e9027bf70717827e052411e18a644d3bb11f70145bb8ffa/Gooey-1.0.8.1.tar.gz", hash = "sha256:08d6bf534f4d50d50dafba5cfc68dcf31a6e9eeef13a94cbe3ea17c4e45c4671", size = 599826, upload-time = "2021-06-12T18:58:11.146Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/ca/fea05f4cd0ad1b0d64396f114753d4eddaa746722554a00dbc40809dc364/gooey-1.0.8.2.tar.gz", hash = "sha256:e0f53ad6a4aa86962288af8d6c0165ccad74cb514ed24248d0df097efbfce1d8", size = 565947, upload-time = "2026-10-28T05:00:11.049Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/03/2d0fc5f982f085ab72c56caa27238339a28419c0da716add1c5e1cf2fa99/Gooey-1.0.8.1-py2.py3-none-any.whl", hash = "sha256:222793cf4a5dd2f9d5c3174ad7369c3df541d91a49e54d51bbee95745ed75ae2", size = 680508, upload-time = "2021-06-12T18:58:09.501Z" },
+    { url = "https://files.pythonhosted.org/packages/46/37/95ba8a3311000b22884e409c0d98c5459b6454880c24e999ba77238d48ee/gooey-1.0.8.2-py3-none-any.whl", hash = "sha256:f11870570a9ffb1fd7d88db14941ab15bd615492207b991f9d80ccc081798232", size = 601924, upload-time = "2026-10-28T05:00:09.316Z" },
 ]
 
 [[package]]
